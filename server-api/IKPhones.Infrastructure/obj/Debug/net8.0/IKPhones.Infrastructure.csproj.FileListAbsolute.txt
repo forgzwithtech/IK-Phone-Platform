@@ -1,0 +1,17 @@
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.AssemblyInfo.cs
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\bin\Debug\net8.0\IKPhones.Infrastructure.deps.json
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\bin\Debug\net8.0\IKPhones.Infrastructure.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\bin\Debug\net8.0\IKPhones.Infrastructure.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\bin\Debug\net8.0\IKPhones.Application.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\bin\Debug\net8.0\IKPhones.Core.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\bin\Debug\net8.0\IKPhones.Application.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\bin\Debug\net8.0\IKPhones.Core.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.8B66FE36.Up2Date
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\refint\IKPhones.Infrastructure.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\ref\IKPhones.Infrastructure.dll

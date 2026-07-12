@@ -1,0 +1,11 @@
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\bin\Debug\net8.0\IKPhones.Core.deps.json
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\bin\Debug\net8.0\IKPhones.Core.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\bin\Debug\net8.0\IKPhones.Core.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\IKPhones.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\IKPhones.Core.AssemblyInfoInputs.cache
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\IKPhones.Core.AssemblyInfo.cs
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\IKPhones.Core.csproj.CoreCompileInputs.cache
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\IKPhones.Core.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\refint\IKPhones.Core.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\IKPhones.Core.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\ref\IKPhones.Core.dll

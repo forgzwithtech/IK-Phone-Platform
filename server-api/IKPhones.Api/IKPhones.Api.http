@@ -1,0 +1,6 @@
+@IKPhones.Api_HostAddress = http://localhost:5147
+
+GET {{IKPhones.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

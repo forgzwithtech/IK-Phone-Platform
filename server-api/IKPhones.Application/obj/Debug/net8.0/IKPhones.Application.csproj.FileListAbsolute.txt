@@ -1,0 +1,15 @@
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\bin\Debug\net8.0\IKPhones.Application.deps.json
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\bin\Debug\net8.0\IKPhones.Application.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\bin\Debug\net8.0\IKPhones.Application.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\bin\Debug\net8.0\IKPhones.Core.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\bin\Debug\net8.0\IKPhones.Core.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.csproj.AssemblyReference.cache
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.AssemblyInfoInputs.cache
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.AssemblyInfo.cs
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.csproj.CoreCompileInputs.cache
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.94F9BB90.Up2Date
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\refint\IKPhones.Application.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.pdb
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\ref\IKPhones.Application.dll
