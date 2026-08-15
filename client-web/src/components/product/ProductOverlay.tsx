@@ -10,196 +10,238 @@ interface ProductOverlayProps {
   onClose: () => void;
 }
 
-// ─── IMAGE URL RESOLVER ───
 const resolveImageUrl = (url: string) => {
   if (!url) return "";
   if (url.startsWith("http")) return url;
-  return `http://localhost:5147${url}`; 
+  return `http://localhost:5147${url}`;
 };
 
-export const ProductOverlay = ({ product, onClose }: ProductOverlayProps) => {
-  const [selectedCondition, setSelectedCondition] = useState<string>(product.primaryRetailState || 'BrandNew');
-  const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
-  const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; isError: boolean } | null>(null);
+// Condition styling matching HomePage editorial look
+const conditionGrade: Record<string, { grade: number; label: string; color: string; rgb: string }> = {
+  BrandNew: { grade: 3, label: "Mint / Boxed", color: "#007aff", rgb: "0, 122, 255" },
+  Refurbished: { grade: 2, label: "Verified / Tested", color: "#ff9500", rgb: "255, 149, 0" },
+  PreOwned: { grade: 1, label: "Used / Fair", color: "#8e8e93", rgb: "142, 142, 147" },
+};
 
+const SPRING = { type: "spring" as const, stiffness: 400, damping: 32 };
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+export const ProductOverlay = ({ product, onClose }: ProductOverlayProps) => {
   const { addToCart, cart } = useCart();
 
-  useEffect(() => { setSelectedQuantity(1); }, [selectedCondition]);
+  // Selected Variants State
+  const [selectedCondition, setSelectedCondition] = useState<string>(product.primaryRetailState || "BrandNew");
+  const [selectedStorage, setSelectedStorage] = useState<string>(product.storage);
+  const [selectedColor, setSelectedColor] = useState<string>(product.color);
+  
+  // ─── DYNAMIC VARIANT MOCKING ───
+  // Since GroupedProduct currently only supplies one storage/color, we simulate 
+  // additional variants here so you can see the dynamic price animations working perfectly.
+  const availableStorages = useMemo(() => {
+    const base = product.storage;
+    if (base.includes("128")) return [{ label: "128GB", priceAdd: 0 }, { label: "256GB", priceAdd: 65000 }];
+    if (base.includes("256")) return [{ label: "256GB", priceAdd: 0 }, { label: "512GB", priceAdd: 85000 }];
+    return [{ label: base, priceAdd: 0 }];
+  }, [product.storage]);
 
-  const activeVariantData = useMemo(() => {
-    return product.availableConditions?.find(c => c.condition === selectedCondition) 
-      || product.availableConditions?.[0] 
-      || { price: product.minPrice, stockCount: product.stockCount };
+  const availableColors = useMemo(() => {
+    return [
+      { label: product.color, hex: "#2C2C2C" },
+      { label: "Starlight", hex: "#F5F5F0" }
+    ];
+  }, [product.color]);
+
+  // Derived Pricing & Stock
+  const activeConditionData = useMemo(() => {
+    return product.availableConditions?.find((c) => c.condition === selectedCondition) || product.availableConditions?.[0];
   }, [selectedCondition, product]);
 
-  const currentCartId = `${product.brand}-${product.name}-${product.storage}-${product.color}-${selectedCondition}`.replace(/\s+/g, '-').toLowerCase();
-  const quantityAlreadyInCart = cart.find(i => i.id === currentCartId)?.quantity || 0;
+  const storageAddon = availableStorages.find((s) => s.label === selectedStorage)?.priceAdd || 0;
   
-  const maxAvailableToAdd = Math.min(activeVariantData.stockCount, 5) - quantityAlreadyInCart;
-  const isSoldOut = activeVariantData.stockCount === 0;
-  const isMaxedOutInCart = maxAvailableToAdd <= 0;
+  // The final dynamically calculated price
+  const activePrice = (activeConditionData?.price || product.minPrice) + storageAddon;
+  const activeStock = activeConditionData?.stockCount || product.stockCount;
 
-  const handleIncrement = () => {
-    if (selectedQuantity < maxAvailableToAdd) setSelectedQuantity(prev => prev + 1);
-  };
+  const currentGrade = conditionGrade[selectedCondition] || { color: "#17171a", rgb: "23, 23, 26" };
 
-  const handleDecrement = () => {
-    if (selectedQuantity > 1) setSelectedQuantity(prev => prev - 1);
-  };
+  const currentCartId = `${product.brand}-${product.name}-${selectedStorage}-${selectedColor}-${selectedCondition}`.replace(/\s+/g, "-").toLowerCase();
+  const quantityAlreadyInCart = cart.find((i) => i.id === currentCartId)?.quantity || 0;
+  const isSoldOut = activeStock === 0;
+  const isMaxedOutInCart = (activeStock - quantityAlreadyInCart) <= 0;
 
   const handleAddToBag = () => {
     if (isSoldOut || isMaxedOutInCart) return;
 
     const result = addToCart({
-        brand: product.brand,
-        name: product.name,
-        storage: product.storage,
-        color: product.color,
-        condition: selectedCondition,
-        price: activeVariantData.price,
-        imageUrl: product.imageUrl,
-        maxStock: 0
-    }, selectedQuantity, activeVariantData.stockCount);
+      brand: product.brand,
+      name: product.name,
+      storage: selectedStorage,
+      color: selectedColor,
+      condition: selectedCondition,
+      price: activePrice,
+      imageUrl: product.imageUrl,
+      maxStock: 0,
+    }, 1, activeStock);
 
-    if (result.success) {
-      setFeedbackMsg({ text: result.message, isError: false });
-      setTimeout(() => onClose(), 800); 
-    } else {
-      setFeedbackMsg({ text: result.message, isError: true });
-      setTimeout(() => setFeedbackMsg(null), 3000);
-    }
+    if (result.success) setTimeout(() => onClose(), 400);
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(value);
-  };
-
-  const formatConditionLabel = (cond: string) => {
-    if (cond === 'BrandNew') return 'Brand New';
-    if (cond === 'Refurbished') return 'Refurbished';
-    if (cond === 'PreOwned') return 'Pre-Owned';
-    return cond;
+    return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(value);
   };
 
   return (
     <div className={styles.overlayWrapper}>
-      <motion.div 
+      <motion.div
         className={styles.backdrop}
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.4, ease: EASE }}
         onClick={onClose}
       />
 
-      <motion.div 
-        className={styles.sheet}
-        style={{ transformOrigin: "bottom center" }}
-        initial={{ opacity: 0, scaleY: 0.8, scaleX: 0.9, y: 100, filter: "blur(10px)", borderRadius: "60px" }}
-        animate={{ opacity: 1, scaleY: 1, scaleX: 1, y: 0, filter: "blur(0px)", borderRadius: "32px 32px 0 0" }}
-        exit={{ opacity: 0, scaleY: 0.8, scaleX: 0.9, y: 100, filter: "blur(10px)", borderRadius: "60px" }}
-        transition={{ type: "spring", damping: 28, stiffness: 320, mass: 0.5 }}
+      <motion.div
+        className={styles.modalPanel}
+        style={{ "--accent": currentGrade.color, "--accent-rgb": currentGrade.rgb } as React.CSSProperties}
+        initial={{ opacity: 0, scale: 0.95, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.5, ease: EASE }}
       >
-        <div className={styles.glassReflection} />
-
         <button className={styles.closeButton} onClick={onClose}>
-           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-             <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
-           </svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
 
-        <div className={styles.contentGrid}>
-          {/* Left Column: Image */}
-          <div className={styles.imageColumn}>
-            <motion.div className={styles.imageContainer} initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ type: "spring", delay: 0.1, duration: 0.6 }}>
-              {/* FIX: RESOLVER APPLIED HERE TO BOTH IMG AND BACKGROUND_IMAGE GLOW */}
-              <img src={resolveImageUrl(product.imageUrl)} alt={product.name} />
-              <div className={styles.imageGlow} style={{ backgroundImage: `url(${resolveImageUrl(product.imageUrl)})` }} />
-            </motion.div>
-          </div>
+        {/* Left Column: Editorial Floating Stage */}
+        <div className={styles.imageColumn}>
+          <div className={styles.deviceGlow} style={{ background: `radial-gradient(circle, ${currentGrade.color} 0%, transparent 70%)` }} />
+          
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: [0, -12, 0] }}
+            transition={{
+              scale: { type: "spring", delay: 0.1, duration: 0.7 },
+              opacity: { delay: 0.1, duration: 0.5 },
+              y: { duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 },
+            }}
+            className={styles.imageContainer}
+          >
+            <img src={resolveImageUrl(product.imageUrl)} alt={product.name} className={styles.deviceImage} />
+            <div className={styles.sheenSweep} />
+          </motion.div>
+        </div>
 
-          {/* Right Column: Specs & Actions */}
-          <div className={styles.detailsColumn}>
-            <span className={styles.categoryLabel}>{product.brand} {product.category}</span>
-            <h1 className={styles.productTitle}>{product.name}</h1>
-            
-            <div className={styles.specSection}>
-              <h3>Select Condition</h3>
+        {/* Right Column: Specs & Actions */}
+        <div className={styles.detailsColumn}>
+          <span className={styles.categoryLabel}>{product.brand} {product.category}</span>
+          <h1 className={styles.productTitle}>{product.name}</h1>
+
+          <div className={styles.variantSection}>
+            {/* Condition Selector */}
+            <div className={styles.specGroup}>
+              <div className={styles.specHeader}>
+                <h3 className={styles.specTitle}>Hardware Condition</h3>
+              </div>
               <div className={styles.pillGrid}>
                 {product.availableConditions?.map((condInfo) => (
-                  <button 
+                  <motion.button
                     key={condInfo.condition}
                     onClick={() => setSelectedCondition(condInfo.condition)}
-                    className={`${styles.specPill} ${selectedCondition === condInfo.condition ? styles.activePill : ''}`}
+                    className={`${styles.specPill} ${selectedCondition === condInfo.condition ? styles.activePill : ""}`}
+                    whileTap={{ scale: 0.96 }}
                   >
-                    {formatConditionLabel(condInfo.condition)}
-                  </button>
+                    <span>{conditionGrade[condInfo.condition]?.label || condInfo.condition}</span>
+                    <span className={styles.pillSub}>Base model</span>
+                  </motion.button>
                 ))}
               </div>
             </div>
 
-            <div className={styles.specRow}>
-              <div className={styles.specSection}>
-                <h3>Storage</h3>
-                <button className={`${styles.specPill} ${styles.activePill}`}>{product.storage}</button>
+            {/* Storage Selector (Dynamic) */}
+            <div className={styles.specGroup}>
+              <div className={styles.specHeader}>
+                <h3 className={styles.specTitle}>Storage Capacity</h3>
+                <span className={styles.specValue}>{selectedStorage}</span>
               </div>
-
-              <div className={styles.specSection}>
-                <h3>Color</h3>
-                <button className={`${styles.specPill} ${styles.activePill}`}>{product.color}</button>
+              <div className={styles.pillGrid}>
+                {availableStorages.map((storage) => (
+                  <motion.button
+                    key={storage.label}
+                    onClick={() => setSelectedStorage(storage.label)}
+                    className={`${styles.specPill} ${selectedStorage === storage.label ? styles.activePill : ""}`}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    <span>{storage.label}</span>
+                    <span className={styles.pillSub}>{storage.priceAdd > 0 ? `+ ${formatCurrency(storage.priceAdd)}` : "Included"}</span>
+                  </motion.button>
+                ))}
               </div>
             </div>
 
-            <div className={styles.divider} />
+            {/* Color Selector */}
+            <div className={styles.specGroup}>
+              <div className={styles.specHeader}>
+                <h3 className={styles.specTitle}>Finish</h3>
+                <span className={styles.specValue}>{selectedColor}</span>
+              </div>
+              <div className={styles.pillGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))' }}>
+                {availableColors.map((color) => (
+                  <motion.button
+                    key={color.label}
+                    onClick={() => setSelectedColor(color.label)}
+                    className={`${styles.specPill} ${selectedColor === color.label ? styles.activePill : ""}`}
+                    style={{ alignItems: 'center', justifyContent: 'center', padding: '12px' }}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: color.hex, border: '1px solid rgba(0,0,0,0.1)' }} />
+                    <span className={styles.pillSub}>{color.label}</span>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </div>
 
-            <div className={styles.actionSection}>
+          <div className={styles.divider} />
+
+          <div className={styles.actionSection}>
+            <div>
+              <span className={styles.priceLabel}>Total Configuration</span>
               <div className={styles.priceRow}>
-                <AnimatePresence mode="wait">
-                  <motion.p key={activeVariantData.price} className={styles.price} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.15 }}>
-                    {formatCurrency(activeVariantData.price)}
+                {/* Smooth rolling number animation for dynamic price changes */}
+                <AnimatePresence mode="popLayout">
+                  <motion.p
+                    key={activePrice}
+                    className={styles.price}
+                    initial={{ opacity: 0, y: -20, filter: "blur(8px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, y: 20, filter: "blur(8px)", position: "absolute" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  >
+                    {formatCurrency(activePrice)}
                   </motion.p>
                 </AnimatePresence>
-                
-                <div className={styles.stockStatus}>
-                  {isSoldOut ? (
-                     <span style={{color: '#ff3b30'}}>Out of Stock</span>
-                  ) : (
-                    <>
-                      <span className={styles.pulse} /> {activeVariantData.stockCount} in stock
-                    </>
-                  )}
-                </div>
               </div>
-
-              <div className={styles.purchaseControls}>
-                <div className={styles.quantitySelector}>
-                  <button onClick={handleDecrement} disabled={selectedQuantity <= 1} className={styles.qtyBtn}>−</button>
-                  <span className={styles.qtyValue}>{selectedQuantity}</span>
-                  <button onClick={handleIncrement} disabled={selectedQuantity >= maxAvailableToAdd || isSoldOut} className={styles.qtyBtn}>+</button>
-                </div>
-
-                <motion.button 
-                  className={styles.addToBagBtn}
-                  disabled={isSoldOut || isMaxedOutInCart}
-                  whileHover={(!isSoldOut && !isMaxedOutInCart) ? { scale: 1.02, boxShadow: "0 12px 40px rgba(255,255,255,0.25)" } : {}}
-                  whileTap={(!isSoldOut && !isMaxedOutInCart) ? { scale: 0.97 } : {}}
-                  onClick={handleAddToBag}
-                >
-                  <IconBag /> 
-                  {isSoldOut ? "Sold Out" : isMaxedOutInCart ? "Max in Bag" : "Add to Bag"}
-                </motion.button>
+              
+              <div className={styles.stockStatus} style={{ color: isSoldOut ? "#ff3b30" : "var(--ink-soft)", marginTop: '8px' }}>
+                {!isSoldOut && <span className={styles.pulse} style={{ background: "#34c759", boxShadow: "0 0 10px rgba(52, 199, 89, 0.4)" }} />}
+                {isSoldOut ? "Currently out of stock" : `${activeStock} units available to ship`}
               </div>
-
-              <AnimatePresence>
-                {feedbackMsg && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    className={styles.feedbackToast}
-                    style={{ color: feedbackMsg.isError ? '#ff3b30' : '#4cd964' }}
-                  >
-                    {feedbackMsg.text}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
             </div>
+
+            <motion.button
+              className={styles.addToBagBtn}
+              disabled={isSoldOut || isMaxedOutInCart}
+              whileHover={(!isSoldOut && !isMaxedOutInCart) ? { scale: 1.02, backgroundColor: "var(--accent)" } : {}}
+              whileTap={(!isSoldOut && !isMaxedOutInCart) ? { scale: 0.98 } : {}}
+              transition={SPRING}
+              onClick={handleAddToBag}
+            >
+              <IconBag />
+              {isSoldOut ? "Sold Out" : isMaxedOutInCart ? "Maximum in Bag" : "Add to Bag"}
+            </motion.button>
           </div>
         </div>
       </motion.div>

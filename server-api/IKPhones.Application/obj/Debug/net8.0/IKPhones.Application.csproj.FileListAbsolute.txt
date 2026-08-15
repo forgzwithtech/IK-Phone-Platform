@@ -13,3 +13,4 @@ C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Applica
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\refint\IKPhones.Application.dll
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.pdb
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\ref\IKPhones.Application.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Application\obj\Debug\net8.0\IKPhones.Application.sourcelink.json

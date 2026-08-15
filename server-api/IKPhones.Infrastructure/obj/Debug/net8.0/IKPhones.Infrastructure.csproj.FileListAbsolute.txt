@@ -15,3 +15,4 @@ C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrast
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\refint\IKPhones.Infrastructure.dll
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.pdb
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\ref\IKPhones.Infrastructure.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Infrastructure\obj\Debug\net8.0\IKPhones.Infrastructure.sourcelink.json

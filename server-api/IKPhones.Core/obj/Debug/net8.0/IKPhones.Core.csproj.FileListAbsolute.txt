@@ -9,3 +9,4 @@ C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\ob
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\refint\IKPhones.Core.dll
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\IKPhones.Core.pdb
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\ref\IKPhones.Core.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Core\obj\Debug\net8.0\IKPhones.Core.sourcelink.json

@@ -1,3 +1,4 @@
+/* Navbar.module.css */
 .navWrapper {
   position: fixed;
   top: 0;
@@ -6,35 +7,54 @@
   display: flex;
   justify-content: center;
   z-index: 9999;
-  pointer-events: none; 
+  pointer-events: none;
 }
 
-/* ─── MAIN NAV PILL (VOLUMETRIC LIQUID GLASS) ─── */
+/*
+  Width/top/border-radius now animate via CSS transition (native, compositor-
+  scheduled) instead of Framer Motion's per-frame JS style writes. Blur radius
+  cut from 60px → 26px: cost of backdrop-filter scales heavily with blur
+  radius, and 26px still reads as "glass" without being the main lag source.
+*/
 .navbar {
   pointer-events: auto;
-  position: relative;
-  overflow: visible;
-  
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(60px) saturate(200%);
-  -webkit-backdrop-filter: blur(60px) saturate(200%);
-
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  overflow: hidden;
+  width: min(96%, 1040px);
+  top: 22px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.8),
-    0 12px 30px rgba(0, 0, 0, 0.05);
-  
-  transition: background 0.5s ease, box-shadow 0.5s ease;
+    0 12px 30px rgba(0, 0, 0, 0.06);
+  transition:
+    width 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    top 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 0.35s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease;
+}
+
+.navbar.scrolled {
+  width: min(88%, 760px);
+  top: 14px;
+}
+
+.navbar.menuOpen {
+  border-radius: 28px;
 }
 
 .glassRefraction {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  border-radius: inherit; 
   background: radial-gradient(ellipse 80% 60% at 20% -10%, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
   z-index: 0;
-  overflow: hidden;
 }
 
 .glassHighlight {
@@ -44,131 +64,121 @@
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,1), transparent);
   z-index: 1;
-  filter: blur(0.5px);
 }
 
-/* ─── INNER LAYOUT ─── */
+.scrollTrack {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left center;
+  background: linear-gradient(90deg, #007aff, #5856d6);
+  z-index: 3;
+}
+
 .navContainer {
   position: relative;
   z-index: 2;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 0.75rem 1.25rem; 
+  padding: 0.7rem 1.25rem;
 }
 
 .brand {
-  font-size: 1.2rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: #1a1a1c;
-  cursor: pointer;
-  z-index: 10;
-  flex-shrink: 0;
-  text-shadow: none;
-}
-
-.accent {
-  background: linear-gradient(135deg, #007aff, #0056b3);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ─── DESKTOP ICONS & TOOLTIPS ─── */
-.desktopLinks {
   display: flex;
   align-items: center;
-  gap: 0.75rem; 
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  gap: 0.55rem;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
-.liquidDropTrack {
-  position: absolute;
-  top: 4px; bottom: 4px;
-  pointer-events: none;
-  z-index: 0;
-  border-radius: 50px;
-  background: rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.05),
-    0 4px 12px rgba(0, 0, 0, 0.05),
-    0 0 0 1px rgba(0, 0, 0, 0.02);
+.brandMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #1a1a1c 0%, #3a3a3e 100%);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-.dropInner {
-  position: absolute; inset: 0;
-  border-radius: 50px; overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+.brandWord {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #1a1a1c;
+  white-space: nowrap;
 }
 
-.dropSheen {
-  position: absolute; top: 2px; left: 15%; right: 15%; height: 4px;
-  background: rgba(255,255,255,0.6);
-  border-radius: 10px; filter: blur(1px);
-}
-
-.dropBubble {
-  position: absolute; bottom: 0; left: 10%; right: 10%; height: 40%;
-  background: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8) 0%, transparent 70%);
-  border-radius: 50%; filter: blur(3px);
+/*
+  FIX: real flex participant, not position: absolute. flex: 1 + centered
+  content means this section always occupies the actual space between
+  .brand and .actions — it physically cannot overlap them, at any navbar
+  width, on any screen size.
+*/
+.desktopLinks {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0; /* allows flex children to shrink instead of overflowing */
 }
 
 .linkWrapper {
   position: relative;
-  z-index: 1;
   cursor: pointer;
-  padding: 0.65rem 1.25rem; 
+  padding: 0.6rem 1rem;
   border-radius: 50px;
   display: flex;
-  justify-content: center;
   align-items: center;
-}
-
-.iconContainer {
-  position: relative;
-  z-index: 2;
-  color: rgba(0, 0, 0, 0.4);
-  transition: color 0.3s ease;
-  display: flex;
-}
-
-.linkWrapper:hover .iconContainer { color: rgba(0, 0, 0, 0.9); }
-.activeIcon { color: #000000; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15)); }
-
-/* Tooltip */
-.tooltip {
-  position: absolute;
-  top: calc(100% + 18px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-5px) scale(0.95);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  color: #000000;
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+  gap: 0.45rem;
+  z-index: 1;
   white-space: nowrap;
 }
 
-.linkWrapper:hover .tooltip {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0) scale(1);
+.activePill {
+  position: absolute;
+  inset: 0;
+  border-radius: 50px;
+  background: rgba(0, 0, 0, 0.055);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.05),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  z-index: -1;
 }
 
-/* ─── ACTIONS ─── */
+.iconContainer {
+  display: flex;
+  color: rgba(0, 0, 0, 0.4);
+  transition: color 0.25s ease;
+}
+
+.linkWrapper:hover .iconContainer { color: rgba(0, 0, 0, 0.8); }
+.activeIcon { color: #000; }
+
+.linkLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.45);
+  letter-spacing: 0.01em;
+  transition: color 0.25s ease;
+}
+
+.linkWrapper:hover .linkLabel { color: rgba(0, 0, 0, 0.8); }
+.activeLabel { color: #000; font-weight: 700; }
+
+/* Once the pill is small enough, hide text labels and keep icons only —
+   prevents the exact "blocked/cramped" failure mode at narrow widths. */
+.navbar.scrolled .linkLabel { display: none; }
+.navbar.scrolled .linkWrapper { padding: 0.6rem 0.75rem; }
+
 .actions {
   display: flex;
   align-items: center;
@@ -178,21 +188,18 @@
 }
 
 .cartBtn {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   color: #1a1a1c;
-  height: 40px; 
-  padding: 0 1.2rem; 
+  height: 40px;
+  padding: 0 1rem;
   border-radius: 50px;
   cursor: pointer;
-  transition: background 0.2s;
-  overflow: hidden;
-  white-space: nowrap;
 }
 
 .cartBtn:hover { background: rgba(0, 0, 0, 0.08); }
@@ -200,10 +207,24 @@
 .cartText {
   font-size: 0.85rem;
   font-weight: 600;
-  margin-left: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-/* ─── HAMBURGER & MOBILE ─── */
+.cartBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #007aff;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 .hamburger {
   display: none;
   flex-direction: column;
@@ -213,9 +234,9 @@
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  width: 40px; 
+  width: 40px;
   height: 40px;
-  border-radius: 50%; 
+  border-radius: 50%;
 }
 
 .bar, .barOpen1, .barOpen2, .barOpen3 {
@@ -232,33 +253,28 @@
   overflow: hidden;
   border-top: 1px solid rgba(0,0,0,0.05);
   padding: 0 1.5rem;
-  background: transparent;
 }
 
 .mobileLink {
-  padding: 1.25rem 0;
+  padding: 1.1rem 0;
   color: rgba(0,0,0,0.6);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 500;
   cursor: pointer;
   border-bottom: 1px solid rgba(0,0,0,0.05);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
 }
+.mobileLinkIcon { display: flex; opacity: 0.6; }
 .mobileLink:last-child { border-bottom: none; }
 .mobileLinkActive { color: #1a1a1c; font-weight: 700; }
+.mobileLinkActive .mobileLinkIcon { opacity: 1; }
 
 @media (max-width: 768px) {
   .desktopLinks { display: none; }
   .hamburger { display: flex; }
   .cartText { display: none; }
-  
-  .cartBtn { 
-    padding: 0; 
-    width: 40px; 
-    height: 40px; 
-    border-radius: 50%;
-  }
-  .navbar { width: min(94%, 600px) !important; }
+  .cartBtn { padding: 0 0.6rem; width: auto; height: 40px; border-radius: 24px; }
+  .navbar, .navbar.scrolled { width: min(94%, 600px); }
 }

@@ -138,3 +138,4 @@ C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Api\bin
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Api\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKPhones.Api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\user222\OneDrive\Desktop\ik-phones-platform\server-api\IKphones.Api\obj\Debug\net8.0\IKPhones.Api.sourcelink.json

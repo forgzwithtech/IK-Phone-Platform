@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IKPhones.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1e29a722e792f0b1cdfd66fb7261352d62726f28")]
 [assembly: System.Reflection.AssemblyProductAttribute("IKPhones.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IKPhones.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
