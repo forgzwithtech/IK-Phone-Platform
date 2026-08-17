@@ -22,6 +22,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
 
+# Prevent inotify limit crash on Render containers
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV ASPNETCORE_hostBuilder__reloadConfigOnChange=false
+
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
