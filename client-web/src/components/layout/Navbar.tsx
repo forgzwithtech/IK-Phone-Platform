@@ -1,5 +1,5 @@
 // Navbar.tsx
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { motion, useScroll, useMotionValueEvent, useTransform, AnimatePresence } from "framer-motion";
 import { IconCatalog, IconTrade, IconValuate, IconAbout, IconBag } from "../ui/icon";
 import { useCart } from "../../context/CartContext";

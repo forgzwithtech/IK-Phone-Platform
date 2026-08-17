@@ -118,12 +118,12 @@ export const HomePage = () => {
   // Valuation Engine State
   const [valBrand, setValBrand] = useState<string>("");
   const [valModel, setValModel] = useState<string>("");
-  const [valAgeMonths, setValAgeMonths] = useState<number>(6);
+  const [valAgeMonths] = useState<number>(6);
   const [valBodyCondition, setValBodyCondition] = useState<number>(100);
   const [valScreenCondition, setValScreenCondition] = useState<number>(100);
 
   const [isValuating, setIsValuating] = useState<boolean>(false);
-  const [valError, setValError] = useState<string | null>(null);
+  const [, setValError] = useState<string | null>(null);
   const [valResult, setValResult] = useState<{ id: string; value: number; message: string } | null>(null);
 
   const { scrollY } = useScroll();
