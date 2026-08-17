@@ -24,8 +24,9 @@ const inputStyle = {
 
 const resolveImageUrl = (url: string) => {
   if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `http://localhost:5147${url}`; 
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5147";
+  return `${baseUrl}${url.startsWith("/") ? "" : "/"}${url}`; 
 };
 
 const formatCurrency = (value: number) => {
@@ -62,39 +63,64 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
   
   const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [statusNotification, setStatusNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const [inventorySearch, setInventorySearch] = useState("");
   const [orderSearch, setOrderSearch] = useState("");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
+  const showNotification = (type: "success" | "error", message: string) => {
+    setStatusNotification({ type, message });
+    setTimeout(() => {
+      setStatusNotification(null);
+    }, 4500);
+  };
+
   useEffect(() => {
+    let isMounted = true;
     const fetchAdminTelemetry = async () => {
+      setIsLoading(true);
       try {
         const [variantsData, ordersData, categoriesData, brandsData, inventoryData, personnelData] = await Promise.all([
-          api.get('/admin/inventory/variants'),
-          api.get('/admin/orders/all'),
-          api.get('/categories').catch(() => []), 
-          api.get('/brands').catch(() => []),
-          api.get('/inventory').catch(() => []), 
-          api.get('/admin/users/all').catch(() => []) 
+          api.get('/admin/inventory/variants').catch(err => { console.warn("Variants fetch error:", err); return []; }),
+          api.get('/admin/orders/all').catch(err => { console.warn("Orders fetch error:", err); return []; }),
+          api.get('/categories').catch(err => { console.warn("Categories fetch error:", err); return []; }), 
+          api.get('/brands').catch(err => { console.warn("Brands fetch error:", err); return []; }),
+          api.get('/inventory').catch(err => { console.warn("Inventory fetch error:", err); return []; }), 
+          api.get('/admin/users/all').catch(err => { console.warn("Personnel fetch error:", err); return []; }) 
         ]);
-        setVariants(variantsData);
-        setOrders(ordersData);
-        setCategories(categoriesData);
-        setBrands(brandsData);
-        setFullInventory(inventoryData);
-        setPersonnel(personnelData);
+
+        if (!isMounted) return;
+
+        const safeVariants = Array.isArray(variantsData) ? variantsData : [];
+        const safeOrders = Array.isArray(ordersData) ? ordersData : [];
+        const safeCategories = Array.isArray(categoriesData) ? categoriesData : [];
+        const safeBrands = Array.isArray(brandsData) ? brandsData : [];
+        const safeInventory = Array.isArray(inventoryData) ? inventoryData : [];
+        const safePersonnel = Array.isArray(personnelData) ? personnelData : [];
+
+        setVariants(safeVariants);
+        setOrders(safeOrders);
+        setCategories(safeCategories);
+        setBrands(safeBrands);
+        setFullInventory(safeInventory);
+        setPersonnel(safePersonnel);
         
-        if (variantsData.length > 0 && !stockForm.deviceVariantId) {
-          setStockForm(prev => ({ ...prev, deviceVariantId: variantsData[0].id }));
-        }
+        setStockForm(prev => {
+          if (!prev.deviceVariantId && safeVariants.length > 0) {
+            return { ...prev, deviceVariantId: safeVariants[0].id };
+          }
+          return prev;
+        });
       } catch (err) {
         console.error("Failed to fetch administrative records", err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
+
     fetchAdminTelemetry();
+    return () => { isMounted = false; };
   }, [refreshTrigger]);
 
   // ─── PIPELINE 1: DYNAMIC PIE CHART (ORDER LIFECYCLE CALCULATOR) ───
@@ -133,10 +159,10 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
     orders.forEach(order => {
       if (["Paid", "Processing", "OutForDelivery", "Delivered"].includes(order.status)) {
         order.items?.forEach((item: any) => {
-          const productKey = `${item.brandName} ${item.modelName}`;
+          const productKey = `${item.brandName || ''} ${item.modelName || ''}`.trim() || "Item";
           itemsMatrix[productKey] = (itemsMatrix[productKey] || 0) + 1;
-          brandsMatrix[item.brandName] = (brandsMatrix[item.brandName] || 0) + 1;
-          categoriesMatrix[item.categoryName] = (categoriesMatrix[item.categoryName] || 0) + 1;
+          if (item.brandName) brandsMatrix[item.brandName] = (brandsMatrix[item.brandName] || 0) + 1;
+          if (item.categoryName) categoriesMatrix[item.categoryName] = (categoriesMatrix[item.categoryName] || 0) + 1;
         });
       }
     });
@@ -169,7 +195,7 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
   const [newUser, setNewUser] = useState({ name: "", phone: "", role: "Staff" });
   const handleInviteUser = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Secure credential node deployed via SMS proxy to ${newUser.phone}.`);
+    showNotification("success", `Secure credential node deployed to ${newUser.phone}.`);
     setNewUser({ name: "", phone: "", role: "Staff" });
   };
 
@@ -191,16 +217,14 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
     formData.append("file", file); 
 
     try {
-      const uploadResponse = await fetch('http://localhost:5147/api/admin/inventory/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!uploadResponse.ok) throw new Error(`Server execution error status: ${uploadResponse.status}`);
-      const data = await uploadResponse.json();
-      setProductForm({ ...productForm, imageUrl: data.url || data.Url });
-    } catch (err) {
+      const data = await api.postFormData<{ url?: string; Url?: string }>('/admin/inventory/upload-image', formData);
+      const finalUrl = data?.url || data?.Url || "";
+      if (!finalUrl) throw new Error("Server did not return a valid URL.");
+      setProductForm(prev => ({ ...prev, imageUrl: finalUrl }));
+      showNotification("success", "Image uploaded successfully to cloud storage.");
+    } catch (err: any) {
       console.error(err);
-      alert("Image pipeline failed to upload.");
+      showNotification("error", err?.message || "Image pipeline failed to upload.");
     } finally {
       setIsUploadingImage(false);
     }
@@ -217,11 +241,15 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
         ...productForm, categoryName: finalCategoryName, brandName: finalBrandName
       });
       setProductForm({ modelName: "", storage: "", color: "", imageUrl: "" });
-      setSelectedCategory(""); setNewCategoryName(""); setSelectedBrand(""); setNewBrandName("");
+      setSelectedCategory(""); 
+      setNewCategoryName(""); 
+      setSelectedBrand(""); 
+      setNewBrandName("");
+      showNotification("success", `Model ${productForm.modelName} registered successfully.`);
       setRefreshTrigger(prev => prev + 1);
       setInventoryMode("inject"); 
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to commit layout schema.");
+      showNotification("error", err.response?.data?.message || err.message || "Failed to commit layout schema.");
     } finally {
       setIsCreatingProduct(false);
     }
@@ -235,36 +263,73 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
 
   const handleAddStock = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!stockForm.deviceVariantId) {
+      showNotification("error", "Please register or select a device model first.");
+      return;
+    }
     setIsInjecting(true);
     try {
       const serialsArray = stockForm.serialNumbers.split(',').map(s => s.trim()).filter(s => s.length > 0);
       await api.post('/admin/inventory/add-stock', {
         deviceVariantId: stockForm.deviceVariantId, sellingPrice: parseFloat(stockForm.sellingPrice),
         retailState: stockForm.retailState, conditionGrade: stockForm.retailState === "BrandNew" ? null : stockForm.conditionGrade,
-        autoGenerateSerials: stockForm.autoGenerate, quantity: stockForm.quantity, serialNumbers: serialsArray
+        autoGenerateSerials: stockForm.autoGenerate, quantity: Number(stockForm.quantity), serialNumbers: serialsArray
       });
-      setStockForm({ ...stockForm, serialNumbers: "", quantity: 1 });
+      showNotification("success", `Injected ${stockForm.autoGenerate ? stockForm.quantity : serialsArray.length} unit(s) into inventory.`);
+      setStockForm(prev => ({ ...prev, serialNumbers: "", sellingPrice: "", quantity: 1 }));
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to finalize database injection.");
+      showNotification("error", err.response?.data?.message || err.message || "Failed to finalize database injection.");
     } finally {
       setIsInjecting(false);
     }
   };
 
   const filteredInventory = fullInventory.filter(item => 
-    item.brand.toLowerCase().includes(inventorySearch.toLowerCase()) || 
-    item.modelName.toLowerCase().includes(inventorySearch.toLowerCase())
+    (item.brand || "").toLowerCase().includes(inventorySearch.toLowerCase()) || 
+    (item.modelName || "").toLowerCase().includes(inventorySearch.toLowerCase())
   );
 
   const filteredOrders = orders.filter(order => 
-    order.id.toLowerCase().includes(orderSearch.toLowerCase()) || 
-    order.customerName.toLowerCase().includes(orderSearch.toLowerCase())
+    (order.id || "").toLowerCase().includes(orderSearch.toLowerCase()) || 
+    (order.customerName || "").toLowerCase().includes(orderSearch.toLowerCase())
   );
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#0a0a0c", color: "#fff", fontFamily: "system-ui, sans-serif" }}>
       
+      {/* ─── TOAST NOTIFICATION BANNER ─── */}
+      <AnimatePresence>
+        {statusNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: -20, x: "-50%" }}
+            style={{
+              position: "fixed",
+              top: "24px",
+              left: "50%",
+              zIndex: 9999,
+              padding: "1rem 2rem",
+              borderRadius: "16px",
+              fontWeight: 700,
+              fontSize: "0.95rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.8)",
+              background: statusNotification.type === "success" ? "rgba(20, 45, 30, 0.95)" : "rgba(45, 20, 20, 0.95)",
+              border: statusNotification.type === "success" ? "1px solid #34c759" : "1px solid #ff3b30",
+              color: statusNotification.type === "success" ? "#34c759" : "#ff3b30",
+              backdropFilter: "blur(20px)"
+            }}
+          >
+            <span>{statusNotification.type === "success" ? "✓" : "⚠"}</span>
+            {statusNotification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ─── SIDEBAR ─── */}
       <aside style={{ width: "280px", ...liquidGlassStyle, borderRadius: "0 24px 24px 0", borderLeft: "none", display: "flex", flexDirection: "column", zIndex: 10 }}>
         <div style={{ padding: "2.5rem 2rem", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
@@ -303,12 +368,17 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
           {/* ─── OVERVIEW TAB (CHARTS & TELEMETRY) ─── */}
           {activeTab === "overview" && (
             <motion.div key="overview" variants={staggerContainer} initial="hidden" animate="show" exit={{ opacity: 0 }}>
-              <motion.h1 variants={fadeUp} style={{ marginTop: 0, fontSize: "2.5rem" }}>System Telemetry</motion.h1>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <motion.h1 variants={fadeUp} style={{ marginTop: 0, fontSize: "2.5rem" }}>System Telemetry</motion.h1>
+                <button onClick={() => setRefreshTrigger(prev => prev + 1)} style={{ padding: "0.6rem 1.2rem", borderRadius: "10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#00f2fe", cursor: "pointer", fontWeight: 600 }}>
+                  {isLoading ? "Syncing..." : "↻ Refresh"}
+                </button>
+              </div>
               
               <motion.div variants={fadeUp} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem", marginTop: "2rem" }}>
                 <div style={{ ...liquidGlassStyle, padding: "2rem", borderTop: "2px solid #00f2fe" }}>
                   <p style={{ color: "rgba(255,255,255,0.5)", margin: "0 0 0.5rem 0", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700 }}>Total Revenue (All Time)</p>
-                  <h2 style={{ margin: 0, fontSize: "3rem", color: "#fff", fontWeight: 300 }}>{formatCurrency(orders.reduce((sum, o) => sum + o.totalAmount, 0))}</h2>
+                  <h2 style={{ margin: 0, fontSize: "3rem", color: "#fff", fontWeight: 300 }}>{formatCurrency(orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0))}</h2>
                 </div>
                 <div style={{ ...liquidGlassStyle, padding: "2rem" }}>
                   <p style={{ color: "rgba(255,255,255,0.5)", margin: "0 0 0.5rem 0", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700 }}>Total Orders Processed</p>
@@ -444,10 +514,10 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
                             onMouseOver={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"} 
                             onMouseOut={e => e.currentTarget.style.backgroundColor = expandedOrderId === order.id ? "rgba(255,255,255,0.05)" : "transparent"}
                           >
-                            <td style={{ padding: "1.5rem", fontFamily: "monospace", fontSize: "0.9rem", color: "#00f2fe" }}>{order.id.split('-')[0].toUpperCase()}</td>
+                            <td style={{ padding: "1.5rem", fontFamily: "monospace", fontSize: "0.9rem", color: "#00f2fe" }}>{(order.id || "").split('-')[0].toUpperCase()}</td>
                             <td style={{ padding: "1.5rem" }}><div style={{ fontWeight: 600 }}>{order.customerName}</div><div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>{order.customerPhone}</div></td>
-                            <td style={{ padding: "1.5rem", fontWeight: 700 }}>{formatCurrency(order.totalAmount)}</td>
-                            <td style={{ padding: "1.5rem" }}><span style={{ padding: "0.4rem 0.8rem", borderRadius: "50px", fontSize: "0.8rem", fontWeight: 700, backgroundColor: order.status === "Delivered" ? "rgba(52, 199, 89, 0.1)" : order.status === "Pending" ? "rgba(255, 149, 0, 0.1)" : "rgba(0, 242, 254, 0.1)", color: order.status === "Delivered" ? "#34c759" : order.status === "Pending" ? "#ff9500" : "#00f2fe" }}>{order.status.toUpperCase()}</span></td>
+                            <td style={{ padding: "1.5rem", fontWeight: 700 }}>{formatCurrency(order.totalAmount || 0)}</td>
+                            <td style={{ padding: "1.5rem" }}><span style={{ padding: "0.4rem 0.8rem", borderRadius: "50px", fontSize: "0.8rem", fontWeight: 700, backgroundColor: order.status === "Delivered" ? "rgba(52, 199, 89, 0.1)" : order.status === "Pending" ? "rgba(255, 149, 0, 0.1)" : "rgba(0, 242, 254, 0.1)", color: order.status === "Delivered" ? "#34c759" : order.status === "Pending" ? "#ff9500" : "#00f2fe" }}>{order.status?.toUpperCase()}</span></td>
                             <td style={{ padding: "1.5rem", color: "rgba(255,255,255,0.5)", fontSize: "0.9rem" }}>{new Date(order.date).toLocaleDateString()}</td>
                           </tr>
                           
@@ -561,7 +631,11 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
                       <h3 style={{ marginTop: 0, color: "#00f2fe", marginBottom: "1.5rem" }}>Add Physical Stock to Database</h3>
                       <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>Select Registered Device Model</label>
                       <select required style={inputStyle} value={stockForm.deviceVariantId} onChange={e => setStockForm({...stockForm, deviceVariantId: e.target.value})}>
-                        {variants.map(v => <option key={v.id} value={v.id} style={{background: "#111"}}>{v.displayName}</option>)}
+                        {variants.length === 0 ? (
+                          <option value="" disabled style={{background: "#111"}}>No registered models found. Register a model first.</option>
+                        ) : (
+                          variants.map(v => <option key={v.id} value={v.id} style={{background: "#111"}}>{v.displayName}</option>)
+                        )}
                       </select>
 
                       <div style={{ display: "flex", gap: "1rem" }}>
@@ -624,7 +698,7 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
                           <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>Category</label>
                           <select required style={inputStyle} value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}>
                             <option value="" disabled style={{background: "#111"}}>Select Category</option>
-                            {categories.map((c: any) => <option key={c.id} value={c.name} style={{background: "#111"}}>{c.name}</option>)}
+                            {categories.map((c: any) => <option key={c.id || c.name} value={c.name} style={{background: "#111"}}>{c.name}</option>)}
                             <option value="ADD_NEW" style={{background: "#111", fontWeight: "bold", color: "#00f2fe"}}>+ Add New Category</option>
                           </select>
                           {selectedCategory === "ADD_NEW" && (
@@ -636,7 +710,7 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
                           <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>Brand</label>
                           <select required style={inputStyle} value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)}>
                             <option value="" disabled style={{background: "#111"}}>Select Brand</option>
-                            {brands.map((b: any) => <option key={b.id} value={b.name} style={{background: "#111"}}>{b.name}</option>)}
+                            {brands.map((b: any) => <option key={b.id || b.name} value={b.name} style={{background: "#111"}}>{b.name}</option>)}
                             <option value="ADD_NEW" style={{background: "#111", fontWeight: "bold", color: "#00f2fe"}}>+ Add New Brand</option>
                           </select>
                           {selectedBrand === "ADD_NEW" && (
@@ -687,11 +761,11 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
                 <div style={{ ...liquidGlassStyle, padding: "2.5rem", height: "max-content" }}>
                   <h3 style={{ marginTop: 0, color: "#00f2fe", marginBottom: "1.5rem" }}>Invite New Personnel</h3>
                   <form onSubmit={handleInviteUser}>
-                    <label style={ {display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)"} }>Full Name</label>
+                    <label style={{display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)"}}>Full Name</label>
                     <input type="text" placeholder="John Doe" required style={inputStyle} value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} />
-                    <label style={ {display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)"} }>Phone Number</label>
+                    <label style={{display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)"}}>Phone Number</label>
                     <input type="tel" placeholder="+234" required style={inputStyle} value={newUser.phone} onChange={e => setNewUser({...newUser, phone: e.target.value})} />
-                    <label style={ {display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)"} }>System Role</label>
+                    <label style={{display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.5)"}}>System Role</label>
                     <select style={inputStyle} value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})}>
                       <option value="Staff" style={{background: "#111"}}>Store Staff</option>
                       <option value="Rider" style={{background: "#111"}}>Dispatch Rider</option>
@@ -715,7 +789,7 @@ export const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
                       ) : (
                         personnel.map(user => (
                           <tr key={user.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                            <td style={{ padding: "1.2rem" }}><div style={{ fontWeight: 600 }}>{user.name}</div><div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>{user.phone}</div></td>
+                            <td style={{ padding: "1.2rem" }}><div style={{ fontWeight: 600 }}>{user.name || user.fullName || user.username}</div><div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>{user.phone || user.username}</div></td>
                             <td style={{ padding: "1.2rem" }}><span style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 700, backgroundColor: "rgba(255,255,255,0.1)" }}>{user.role}</span></td>
                             <td style={{ padding: "1.2rem" }}>Active</td>
                           </tr>

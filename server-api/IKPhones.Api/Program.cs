@@ -3,7 +3,6 @@ using IKPhones.Infrastructure.Data;
 using IKPhones.Application.Interfaces;
 using IKPhones.Application.Services;
 using IKPhones.Infrastructure.Workers;
-using IKPhones.Api.Services;
 using IKPhones.Api.Hubs;
 using IKPhones.API.Services;
 using System.Text.Json.Serialization; 
@@ -12,14 +11,20 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using IKPhones.Core.Entities;
 using IKPhones.Api.Controllers;
+using Supabase;
+using IKPhones.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── SERVICES CONFIGURATION ─────────────────────────────────────────────
 
+// CORS: Configured for local development + wildcard origins for Vercel preview/production deployments
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy => policy
-        .WithOrigins("http://localhost:5173")
+        .SetIsOriginAllowed(origin => 
+            origin.StartsWith("http://localhost:") || 
+            origin.EndsWith(".vercel.app") ||
+            origin.Contains("vercel.app"))
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials());
@@ -27,9 +32,31 @@ builder.Services.AddCors(options => {
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<IKPhonesDbContext>(options =>
-    options.UseNpgsql(connectionString, b => b.MigrationsAssembly("IKPhones.Infrastructure")));
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.MigrationsAssembly("IKPhones.Infrastructure");
+        npgsqlOptions.CommandTimeout(60);
+    }));
 
-// ─── NEW: JWT AUTHENTICATION SETUP ───
+// ─── SUPABASE CLIENT SETUP ───
+var supabaseUrl = builder.Configuration["Supabase:Url"] 
+    ?? throw new InvalidOperationException("Supabase:Url is not configured.");
+var supabaseKey = builder.Configuration["Supabase:Key"] 
+    ?? throw new InvalidOperationException("Supabase:Key is not configured.");
+
+builder.Services.AddScoped<Supabase.Client>(_ =>
+{
+    var options = new SupabaseOptions
+    {
+        AutoRefreshToken = true,
+        AutoConnectRealtime = false
+    };
+    var client = new Supabase.Client(supabaseUrl, supabaseKey, options);
+    client.InitializeAsync().GetAwaiter().GetResult();
+    return client;
+});
+
+// ─── JWT AUTHENTICATION SETUP ───
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "IKPhonesSuperSecretKeyForDevelopmentOnly12345!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -75,7 +102,6 @@ app.UseRouting();
 
 app.UseCors();
 
-// ─── NEW: MUST CALL AUTHENTICATION BEFORE AUTHORIZATION ───
 app.UseAuthentication();
 app.UseAuthorization();
 

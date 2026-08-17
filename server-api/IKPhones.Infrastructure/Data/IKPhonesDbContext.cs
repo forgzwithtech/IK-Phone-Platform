@@ -9,6 +9,9 @@ public class IKPhonesDbContext : DbContext
 {
     public IKPhonesDbContext(DbContextOptions<IKPhonesDbContext> options) : base(options)
     {
+        // Disables automatic savepoint commands within transactions.
+        // This stops stream read timeouts and broken transaction pipes when connecting through the Supabase connection pooler.
+        this.Database.AutoSavepointsEnabled = false;
     }
 
     public DbSet<Brand> Brands => Set<Brand>();
@@ -21,8 +24,6 @@ public class IKPhonesDbContext : DbContext
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<TradeInLead> TradeInLeads => Set<TradeInLead>();
-    
-    // ─── NEW: SYSTEM PERSONNEL TABLE ───
     public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -34,11 +35,10 @@ public class IKPhonesDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Username).IsRequired().HasMaxLength(50);
-            entity.HasIndex(e => e.Username).IsUnique(); // Usernames must be unique
+            entity.HasIndex(e => e.Username).IsUnique();
             entity.Property(e => e.Role).IsRequired().HasMaxLength(20);
         });
 
-        // (Keep all your other existing configurations exactly the same below here)
         modelBuilder.Entity<Brand>(entity =>
         {
             entity.HasKey(e => e.Id);
