@@ -91,11 +91,13 @@ var app = builder.Build();
 
 // ─── MIDDLEWARE PIPELINE ────────────────────────────────────────────────
 
-if (app.Environment.IsDevelopment())
+// Swagger enabled for all environments (including Render Production)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "IKPhones API v1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseStaticFiles(); 
 app.UseRouting();
@@ -104,6 +106,9 @@ app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Root route handler for basic availability check
+app.MapGet("/", () => Results.Ok(new { status = "API is live and healthy", serverTime = DateTime.UtcNow }));
 
 app.MapControllers();
 app.MapHub<InventoryHub>("/inventoryHub");
