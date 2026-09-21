@@ -488,6 +488,7 @@ export const HomePage = () => {
                 <h2 className={styles.sectionTitle}>IKPHONES</h2>
                 <div className={`${styles.glassPanel} ${styles.panelPadLg}`}>
                   <p style={{ fontSize: '1.1rem', lineHeight: '1.8', color: 'var(--ink-soft)', margin: 0 }}>
+                    I Know Phones.
                     Built to serve premium tech experiences without the premium hassle. From brand new flagships to rigorously tested pre-owned units, every device that passes through our doors is verified for hardware integrity and screen quality.
                   </p>
                 </div>
